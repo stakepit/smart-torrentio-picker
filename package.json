@@ -1,0 +1,11 @@
+{
+  "name": "smart-torrentio-picker",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "axios": "^0.21.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
