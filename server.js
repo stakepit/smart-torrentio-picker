@@ -1,30 +1,34 @@
-const { createServer } = require('http');
-const { parse } = require('url');
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
 
-createServer((req, res) => {
-    const { pathname } = parse(req.url, true);
-    if (pathname === '/manifest.json') {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({
-            "id": "smart-torrentio-picker",
-            "version": "1.0.0",
-            "type": "movie",
-            "name": "Smart Torrentio Picker",
-            "description": "Automatically selects the best torrent based on user settings.",
-            "catalogs": [
-                {
-                    "type": "movies",
-                    "id": "movies",
-                    "name": "Movies"
-                }
-            ],
-            "resources": ["catalog", "stream"],
-            "logo": "https://yourlogo.com/logo.png"
-        }));
-    } else {
-        res.statusCode = 404;
-        res.end();
-    }
-}).listen(3000, () => {
-    console.log('Server running at http://localhost:3000/');
+// Serve static files (if any)
+app.use(express.static('public'));
+
+// Your route to handle Stremio's manifest
+app.get('/manifest.json', (req, res) => {
+  res.json({
+    id: 'com.example.addon',
+    version: '1.0.0',
+    types: ['movie'],
+    name: 'Smart Torrentio Picker',
+    description: 'A smart torrent picker with the best seeders.',
+    background: 'https://your-logo-url.com/logo.png',
+    logo: 'https://your-logo-url.com/logo.png',
+    resources: [
+      {
+        type: 'movie',
+        id: 'some-movie-id',
+        title: 'Example Movie',
+        url: 'https://your-torrent-url.com/torrent',
+        subtitle: '720p',
+        seeders: 1000
+      }
+    ]
+  });
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
