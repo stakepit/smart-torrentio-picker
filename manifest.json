@@ -9,7 +9,14 @@
     {
       "type": "movie",
       "id": "best-torrents",
-      "name": "Best Torrents"
+      "name": "Best Torrents Movies",
+      "isFeatured": true
+    },
+    {
+      "type": "series",
+      "id": "best-torrents-series",
+      "name": "Best Torrents Series",
+      "isFeatured": true
     }
   ],
   "idPrefixes": ["tt", "movie", "tvshow"]
