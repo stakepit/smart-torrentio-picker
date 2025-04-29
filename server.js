@@ -17,58 +17,74 @@ app.get('/manifest.json', (req, res) => {
       {
         "type": "movie",
         "id": "best-torrents",
-        "name": "Best Torrents"
+        "name": "Best Torrents Movies",
+        "isFeatured": true
+      },
+      {
+        "type": "series",
+        "id": "best-torrents-series",
+        "name": "Best Torrents Series",
+        "isFeatured": true
       }
     ],
     "idPrefixes": ["tt", "movie", "tvshow"]
   });
 });
 
-// Example endpoint to fetch torrent data (filtering by resolution and seeders)
-app.get('/getTorrents', (req, res) => {
-  // This is where you would integrate with a torrent source (such as Torrentio API)
-  const torrents = [
+// Fetch catalog (movies and series) with thumbnails
+app.get('/catalog/:type', (req, res) => {
+  const type = req.params.type; // "movie" or "series"
+
+  // Mock catalog data (you can replace this with actual data from a torrent API)
+  const catalog = [
     {
-      title: "Example Movie 720p",
+      id: "tt1234567",
+      title: "Example Movie",
+      year: 2025,
+      type: "movie",
+      thumbnail: "http://example.com/thumbnails/movie1.jpg", // Add thumbnail URL
       resolution: "720p",
       seeders: 500,
-      url: "http://example.com/torrent1"
     },
     {
-      title: "Example Movie 1080p",
+      id: "tt2345678",
+      title: "Example Series",
+      year: 2023,
+      type: "series",
+      thumbnail: "http://example.com/thumbnails/series1.jpg", // Add thumbnail URL
       resolution: "1080p",
       seeders: 1000,
-      url: "http://example.com/torrent2"
     }
   ];
 
-  // Filter torrents by 720p resolution or higher, and sort by seeders
-  const sortedTorrents = torrents.filter(torrent => torrent.resolution === "720p" || torrent.resolution === "1080p")
-                                 .sort((a, b) => b.seeders - a.seeders);
+  // Filter by the requested type ("movie" or "series")
+  const filteredCatalog = catalog.filter(item => item.type === type);
 
-  res.json(sortedTorrents);
+  res.json({
+    meta: { total: filteredCatalog.length },
+    results: filteredCatalog
+  });
 });
 
 // Stream endpoint that Stremio will use to play the selected torrent
 app.get('/stream/:torrentId', (req, res) => {
   const torrentId = req.params.torrentId;
 
-  // You can modify this to fetch a specific torrent's stream URL from a torrent provider
-  // For example, retrieve the magnet link or file URL for the torrent
+  // Mock stream URLs for each torrent (replace with actual logic to get a stream URL)
   const streamUrls = {
-    "torrent1": "http://example.com/torrent1/stream.m3u8",  // Example stream URL for torrent1
-    "torrent2": "http://example.com/torrent2/stream.m3u8"   // Example stream URL for torrent2
+    "tt1234567": "http://example.com/torrent1/stream.m3u8",
+    "tt2345678": "http://example.com/torrent2/stream.m3u8"
   };
 
   const streamUrl = streamUrls[torrentId];
-  
+
   if (streamUrl) {
-    res.json({ 
+    res.json({
       streams: [
         {
-          "url": streamUrl, // Provide the actual stream URL
-          "type": "hls",    // For HLS streams (e.g., .m3u8)
-          "quality": "720p", // Adjust quality based on torrent info
+          url: streamUrl, // Provide the actual stream URL
+          type: "hls", // For HLS streams (e.g., .m3u8)
+          quality: "720p", // Adjust quality based on torrent info
         }
       ]
     });
