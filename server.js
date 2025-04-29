@@ -12,7 +12,7 @@ const manifest = {
   id: "org.alexsdev.smartpicker",
   version: "1.0.0",
   name: "Smart Torrentio Picker",
-  description: "Auto-selects and autoplays the best torrent (720p > 1080p).",
+  description: "Picks the best torrent (720p > 1080p) and lets you play it with a button.",
   logo: "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
   resources: ["stream"],
   types: ["movie", "series"],
@@ -35,7 +35,7 @@ app.get('/stream/:type/:id', async (req, res) => {
       return res.json({ streams: [] });
     }
 
-    // Filter and prioritize
+    // Filter and prioritize 720p then 1080p
     const preferredOrder = ["720p", "1080p"];
     let bestStream = null;
 
@@ -47,7 +47,7 @@ app.get('/stream/:type/:id', async (req, res) => {
       }
     }
 
-    // Fallback
+    // Fallback to first available stream if none found
     if (!bestStream) {
       bestStream = streams.find(s => s.url);
     }
@@ -56,24 +56,26 @@ app.get('/stream/:type/:id', async (req, res) => {
       return res.json({ streams: [] });
     }
 
-    // Force autoplay via minimal valid response
+    // Return a button with the best torrent selected
     res.json({
-  "streams": [
-    {
-      "url": "magnet:?xt=urn:btih:...",
-      "name": "Auto Play",
-      "title": "Best 720p Torrent",
-      "behaviorHints": {
-        "notWebReady": false,
-        "immediatePlay": true,
-        "bingeGroup": "tt1234567"
-      }
-    }
-  ]
-});
-
-    
-    
+      streams: [
+        {
+          url: bestStream.url,
+          name: "Play Best Pick",
+          title: bestStream.title || "Best Pick",
+          behaviorHints: {
+            notWebReady: false,
+            immediatePlay: false, // Don't autoplay
+            bingeGroup: id,
+          },
+          // Custom button logic
+          customButton: {
+            label: "Play Best Pick",  // Label for the button
+            action: bestStream.url,   // When clicked, play the best stream
+          }
+        }
+      ]
+    });
 
   } catch (error) {
     console.error("Error fetching streams:", error);
