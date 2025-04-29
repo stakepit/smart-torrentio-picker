@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Example manifest
 const manifest = {
@@ -14,16 +13,11 @@ const manifest = {
   idPrefixes: ["tt"]
 };
 
-// Return the manifest
 app.get('/manifest.json', (req, res) => {
   res.json(manifest);
 });
 
-// Example stream handler
-app.get('/stream/:type/:id', async (req, res) => {
-  const { type, id } = req.params;
-
-  // In a real implementation, you'd fetch torrent info from Torrentio here
+app.get('/stream/:type/:id', (req, res) => {
   const streams = [
     {
       name: "Best 720p Torrent",
@@ -42,5 +36,4 @@ app.get('/stream/:type/:id', async (req, res) => {
   res.json({ streams });
 });
 
-module.exports = app;
-
+module.exports = app; // <--- THIS IS CRUCIAL FOR VERCEL
