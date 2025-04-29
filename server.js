@@ -1,85 +1,69 @@
 const express = require('express');
-const cors = require('cors');
 const fetch = require('node-fetch');
-
 const app = express();
-const PORT = process.env.PORT || 7000;
-const TORRENTIO_BASE = 'https://torrentio.strem.fun'; // Replace with actual API if needed
 
-app.use(cors());
-
-// Manifest for the Stremio addon
-const manifest = {
-  id: "org.alexsdev.smartpicker",
-  version: "1.0.0",
-  name: "Smart Torrentio Picker",
-  description: "Auto-picks the best torrent (720p > 1080p) for Stremio.",
-  logo: "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
-  resources: ["stream"],  // Ensure "stream" is listed as a resource
-  types: ["movie", "series"],
-  idPrefixes: ["tt"]
+// Your custom function to fetch torrents (replace with your actual API if available)
+const fetchTorrents = async (type, id) => {
+  // Example: Fetch from a custom API or service (you can integrate the logic from Torrentio or any source)
+  const response = await fetch(`https://your-custom-api/torrents/${type}/${id}`);
+  const torrents = await response.json();
+  return torrents;
 };
 
+// Endpoint for the Stremio manifest
 app.get('/manifest.json', (req, res) => {
-  res.json(manifest);
+  res.json({
+    id: 'org.alexsdev.smartpicker',
+    version: '1.0.0',
+    name: 'Smart Torrentio Picker',
+    description: 'Auto-picks the best torrent (720p > 1080p) for Stremio.',
+    logo: 'https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png',
+    resources: ['stream'],
+    types: ['movie', 'series'],
+    idPrefixes: ['tt'],
+  });
 });
 
-// Stream API - Fetching torrents from Torrentio
+// Endpoint to handle the stream request and return the best torrent stream
 app.get('/stream/:type/:id', async (req, res) => {
   const { type, id } = req.params;
 
   try {
-    // Fetch stream data from Torrentio
-    const response = await fetch(`${TORRENTIO_BASE}/stream/${type}/${id}.json`);
-    const streams = await response.json();
+    // Fetch torrents
+    const torrents = await fetchTorrents(type, id);
 
-    if (!Array.isArray(streams) || streams.length === 0) {
-      return res.json({ streams: [] });  // No streams available
-    }
+    if (torrents && torrents.length > 0) {
+      // Sort torrents by seeders (descending) and prefer 720p over 1080p
+      torrents.sort((a, b) => b.seeders - a.seeders);
 
-    // Filter streams by 720p or 1080p, prefer 720p
-    const preferredOrder = ["720p", "1080p"];
-    let bestStream = null;
-
-    for (const resolution of preferredOrder) {
-      const filtered = streams.filter(s => s.quality === resolution && s.url);
-      if (filtered.length > 0) {
-        bestStream = filtered.sort((a, b) => (b.seeders || 0) - (a.seeders || 0))[0]; // Sort by seeders
-        break;
+      // Pick the best torrent (prefer 720p, then 1080p)
+      const bestTorrent = torrents.find(torrent => torrent.resolution === '720p') || torrents.find(torrent => torrent.resolution === '1080p');
+      
+      if (bestTorrent) {
+        res.json({
+          streams: [
+            {
+              url: bestTorrent.url,  // Use the URL of the best torrent
+              name: bestTorrent.title || 'Best Pick',
+              behaviorHints: {
+                immediatePlay: true,  // Auto-play when selected
+              }
+            }
+          ]
+        });
+      } else {
+        res.json({ streams: [] });
       }
+    } else {
+      res.json({ streams: [] });
     }
-
-    // Fallback to the first available stream if no 720p or 1080p found
-    if (!bestStream) {
-      bestStream = streams.find(s => s.url); // Pick the first available stream
-    }
-
-    if (!bestStream) {
-      return res.json({ streams: [] });  // No valid streams found
-    }
-
-    // Return the best stream with autoplay flag
-    res.json({
-      streams: [
-        {
-          url: bestStream.url,  // Make sure this is a direct playable URL
-          name: "Best Pick",
-          title: bestStream.title || "Best Pick",
-          behaviorHints: {
-            notWebReady: false,  // Make sure this is set to false for auto-play
-            immediatePlay: true,  // Auto-play the best stream
-            bingeGroup: id,
-          },
-        }
-      ]
-    });
-
   } catch (error) {
     console.error("Error fetching streams:", error);
-    res.json({ streams: [] });  // Error case, return empty streams
+    res.json({ streams: [] });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Smart Picker running on port ${PORT}`);
+// Run the app
+app.listen(3000, () => {
+  console.log('Smart Torrentio Picker is running on http://localhost:3000');
 });
