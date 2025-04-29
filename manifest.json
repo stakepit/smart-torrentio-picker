@@ -1,23 +1,10 @@
 {
-  "id": "com.example.torrentio-picker",
+  "id": "org.alexsdev.smartpicker",
   "version": "1.0.0",
-  "name": "Smart Torrent Picker",
-  "description": "This addon selects the best torrents with 720p or higher resolution and the most seeders.",
-  "resources": ["catalog", "stream"],
+  "name": "Smart Torrentio Picker",
+  "description": "Selects the best torrent (720p > 1080p) and integrates it with Stremio as a source.",
+  "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
+  "resources": ["stream"],
   "types": ["movie", "series"],
-  "catalogs": [
-    {
-      "type": "movie",
-      "id": "best-torrents",
-      "name": "Best Torrents Movies",
-      "isFeatured": true
-    },
-    {
-      "type": "series",
-      "id": "best-torrents-series",
-      "name": "Best Torrents Series",
-      "isFeatured": true
-    }
-  ],
-  "idPrefixes": ["tt", "movie", "tvshow"]
+  "idPrefixes": ["tt"]
 }
