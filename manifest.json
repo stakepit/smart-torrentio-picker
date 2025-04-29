@@ -2,7 +2,7 @@
   "id": "org.alexsdev.smartpicker",
   "version": "1.0.0",
   "name": "Smart Torrentio Picker",
-  "description": "Selects the best torrent (720p > 1080p) and integrates it with Stremio as a source.",
+  "description": "Auto-picks the best torrent (720p > 1080p) for Stremio.",
   "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
   "resources": ["stream"],
   "types": ["movie", "series"],
