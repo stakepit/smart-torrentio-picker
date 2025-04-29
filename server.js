@@ -58,20 +58,22 @@ app.get('/stream/:type/:id', async (req, res) => {
 
     // Force autoplay via minimal valid response
     res.json({
-      streams: [
-        {
-          url: bestStream.url,
-          name: "Auto Play",
-          title: bestStream.title || "Best Pick",
-          behaviorHints: {
-            bingeGroup: id,
-            notWebReady: false,
-            autoplay: true,
-            immediatePlay: true
-          }
-        }
-      ]
-    });
+  "streams": [
+    {
+      "url": "magnet:?xt=urn:btih:...",
+      "name": "Auto Play",
+      "title": "Best 720p Torrent",
+      "behaviorHints": {
+        "notWebReady": false,
+        "immediatePlay": true,
+        "bingeGroup": "tt1234567"
+      }
+    }
+  ]
+});
+
+    
+    
 
   } catch (error) {
     console.error("Error fetching streams:", error);
