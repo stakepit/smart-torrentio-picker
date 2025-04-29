@@ -1,10 +1,10 @@
 {
-  "id": "org.alexsdev.smartpicker",
+  "name": "smart-torrent-picker",
   "version": "1.0.0",
-  "name": "Smart Torrentio Picker",
-  "description": "Auto-picks the best torrent (720p > 1080p) for Stremio.",
-  "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
-  "resources": ["stream"],
-  "types": ["movie", "series"],
-  "idPrefixes": ["tt"]
+  "main": "server.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.7"
+  }
 }
