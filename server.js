@@ -35,7 +35,7 @@ app.get('/manifest.json', (req, res) => {
 app.get('/catalog/:type', (req, res) => {
   const type = req.params.type; // "movie" or "series"
 
-  // Mock catalog data (you can replace this with actual data from a torrent API)
+  // Mock catalog data (replace this with actual data from a torrent API)
   const catalog = [
     {
       id: "tt1234567",
@@ -66,30 +66,62 @@ app.get('/catalog/:type', (req, res) => {
   });
 });
 
-// Stream endpoint that Stremio will use to play the selected torrent
+// Stream endpoint that Stremio will use to play the selected torrent (auto-select)
 app.get('/stream/:torrentId', (req, res) => {
   const torrentId = req.params.torrentId;
 
-  // Mock stream URLs for each torrent (replace with actual logic to get a stream URL)
-  const streamUrls = {
-    "tt1234567": "http://example.com/torrent1/stream.m3u8",
-    "tt2345678": "http://example.com/torrent2/stream.m3u8"
+  // Fetch torrent data for the given ID and determine the best stream URL
+  const torrents = {
+    "tt1234567": [
+      {
+        resolution: "720p",
+        seeders: 500,
+        url: "http://example.com/torrent1/stream.m3u8",
+      },
+      {
+        resolution: "1080p",
+        seeders: 1000,
+        url: "http://example.com/torrent2/stream.m3u8",
+      }
+    ],
+    "tt2345678": [
+      {
+        resolution: "720p",
+        seeders: 300,
+        url: "http://example.com/torrent3/stream.m3u8",
+      },
+      {
+        resolution: "1080p",
+        seeders: 800,
+        url: "http://example.com/torrent4/stream.m3u8",
+      }
+    ]
   };
 
-  const streamUrl = streamUrls[torrentId];
+  // Retrieve the list of torrents for the given movie/series ID
+  const torrentList = torrents[torrentId];
 
-  if (streamUrl) {
+  if (!torrentList) {
+    return res.status(404).json({ error: "Torrent not found" });
+  }
+
+  // Sort torrents by resolution (prefer 720p if possible) and seeders
+  const bestTorrent = torrentList
+    .filter(torrent => torrent.resolution === "720p" || torrent.resolution === "1080p")  // Filter by resolution
+    .sort((a, b) => b.seeders - a.seeders)[0]; // Sort by seeders, descending
+
+  if (bestTorrent) {
     res.json({
       streams: [
         {
-          url: streamUrl, // Provide the actual stream URL
-          type: "hls", // For HLS streams (e.g., .m3u8)
-          quality: "720p", // Adjust quality based on torrent info
+          url: bestTorrent.url, // Provide the selected torrent stream URL
+          type: "hls", // Stream type (HLS in this case)
+          quality: bestTorrent.resolution, // Quality (720p or 1080p)
         }
       ]
     });
   } else {
-    res.status(404).json({ error: "Stream not found" });
+    res.status(404).json({ error: "No suitable stream found" });
   }
 });
 
