@@ -45,3 +45,5 @@ app.get('/stream/:type/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Addon running at http://localhost:${PORT}`);
 });
+module.exports = app;
+
