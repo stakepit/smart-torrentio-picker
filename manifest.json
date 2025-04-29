@@ -1,0 +1,16 @@
+{
+  "id": "com.example.torrentio-picker",
+  "version": "1.0.0",
+  "name": "Smart Torrent Picker",
+  "description": "This addon selects the best torrents with 720p or higher resolution and the most seeders.",
+  "resources": ["catalog", "stream"],
+  "types": ["movie", "series"],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "best-torrents",
+      "name": "Best Torrents"
+    }
+  ],
+  "idPrefixes": ["tt", "movie", "tvshow"]
+}
