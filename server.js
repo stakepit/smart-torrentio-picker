@@ -37,3 +37,8 @@ app.get('/stream/:type/:id', (req, res) => {
 });
 
 module.exports = app; // <--- THIS IS CRUCIAL FOR VERCEL
+
+const PORT = process.env.PORT || 7000;  // Use the PORT environment variable for Render
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
