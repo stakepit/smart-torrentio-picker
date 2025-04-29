@@ -1,34 +1,47 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// Serve static files (if any)
-app.use(express.static('public'));
+// Example manifest
+const manifest = {
+  id: "com.alexsdev.smarttorrentpicker",
+  version: "1.0.0",
+  name: "Smart Torrentio Picker",
+  description: "Picks best torrents (720p/1080p) using Torrentio",
+  types: ["movie", "series"],
+  logo: "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
+  resources: ["stream"],
+  idPrefixes: ["tt"]
+};
 
-// Your route to handle Stremio's manifest
+// Return the manifest
 app.get('/manifest.json', (req, res) => {
-  res.json({
-    id: 'com.example.addon',
-    version: '1.0.0',
-    types: ['movie'],
-    name: 'Smart Torrentio Picker',
-    description: 'A smart torrent picker with the best seeders.',
-    background: 'https://your-logo-url.com/logo.png',
-    logo: 'https://your-logo-url.com/logo.png',
-    resources: [
-      {
-        type: 'movie',
-        id: 'some-movie-id',
-        title: 'Example Movie',
-        url: 'https://your-torrent-url.com/torrent',
-        subtitle: '720p',
-        seeders: 1000
-      }
-    ]
-  });
+  res.json(manifest);
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+// Example stream handler
+app.get('/stream/:type/:id', async (req, res) => {
+  const { type, id } = req.params;
+
+  // In a real implementation, you'd fetch torrent info from Torrentio here
+  const streams = [
+    {
+      name: "Best 720p Torrent",
+      title: "Smart 720p",
+      url: "https://example.com/torrent-720p.magnet",
+      behaviorHints: { bingeGroup: "smart" }
+    },
+    {
+      name: "Best 1080p Torrent",
+      title: "Smart 1080p",
+      url: "https://example.com/torrent-1080p.magnet",
+      behaviorHints: { bingeGroup: "smart" }
+    }
+  ];
+
+  res.json({ streams });
+});
+
+app.listen(PORT, () => {
+  console.log(`Addon running at http://localhost:${PORT}`);
 });
