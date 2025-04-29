@@ -1,69 +1,76 @@
 const express = require('express');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch');  // Make sure you install node-fetch
 const app = express();
 
-// Your custom function to fetch torrents (replace with your actual API if available)
-const fetchTorrents = async (type, id) => {
-  // Example: Fetch from a custom API or service (you can integrate the logic from Torrentio or any source)
-  const response = await fetch(`https://your-custom-api/torrents/${type}/${id}`);
-  const torrents = await response.json();
-  return torrents;
+// Helper function to fetch torrents from the Torrentio API
+const fetchTorrentsFromTorrentio = async (type, id) => {
+  try {
+    // Example API request to Torrentio (replace with your real API endpoint)
+    const response = await fetch(`https://torrentio.api.url/search?query=${id}`);
+    const data = await response.json();
+
+    // Process the response and filter torrents
+    return data.torrents || []; // Ensure that 'torrents' key exists in the response
+  } catch (error) {
+    console.error('Error fetching from Torrentio API:', error);
+    return [];
+  }
 };
 
-// Endpoint for the Stremio manifest
+// Endpoint to serve manifest.json
 app.get('/manifest.json', (req, res) => {
   res.json({
     id: 'org.alexsdev.smartpicker',
     version: '1.0.0',
     name: 'Smart Torrentio Picker',
     description: 'Auto-picks the best torrent (720p > 1080p) for Stremio.',
-    logo: 'https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png',
+    logo: 'https://yourlogo.url/logo.png', // Use your actual logo URL
     resources: ['stream'],
     types: ['movie', 'series'],
-    idPrefixes: ['tt'],
+    idPrefixes: ['tt'] // This defines which type of IDs we will be handling (e.g., IMDB IDs)
   });
 });
 
-// Endpoint to handle the stream request and return the best torrent stream
+// API to handle streaming requests and return the best torrent
 app.get('/stream/:type/:id', async (req, res) => {
   const { type, id } = req.params;
 
   try {
-    // Fetch torrents
-    const torrents = await fetchTorrents(type, id);
+    // Fetch torrents for the given type (movie/series) and ID (e.g., IMDB ID)
+    const torrents = await fetchTorrentsFromTorrentio(type, id);
 
     if (torrents && torrents.length > 0) {
-      // Sort torrents by seeders (descending) and prefer 720p over 1080p
+      // Sort torrents by seeders (descending order)
       torrents.sort((a, b) => b.seeders - a.seeders);
 
-      // Pick the best torrent (prefer 720p, then 1080p)
-      const bestTorrent = torrents.find(torrent => torrent.resolution === '720p') || torrents.find(torrent => torrent.resolution === '1080p');
-      
+      // Prioritize 720p over 1080p
+      const bestTorrent = torrents.find(t => t.resolution === '720p') || torrents.find(t => t.resolution === '1080p');
+
       if (bestTorrent) {
         res.json({
           streams: [
             {
-              url: bestTorrent.url,  // Use the URL of the best torrent
-              name: bestTorrent.title || 'Best Pick',
+              url: bestTorrent.url, // Best torrent URL
+              name: bestTorrent.title || 'Best Pick', // Name the torrent
               behaviorHints: {
-                immediatePlay: true,  // Auto-play when selected
+                immediatePlay: true // Make it autoplay when selected
               }
             }
           ]
         });
       } else {
-        res.json({ streams: [] });
+        res.json({ streams: [] }); // No valid torrents
       }
     } else {
-      res.json({ streams: [] });
+      res.json({ streams: [] }); // No torrents found
     }
   } catch (error) {
-    console.error("Error fetching streams:", error);
-    res.json({ streams: [] });
+    console.error('Error fetching torrents:', error);
+    res.json({ streams: [] }); // Return empty if error occurs
   }
 });
 
-// Run the app
+// Start the server
 app.listen(3000, () => {
-  console.log('Smart Torrentio Picker is running on http://localhost:3000');
+  console.log('Smart Torrentio Picker running on http://localhost:3000');
 });
