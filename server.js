@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 7000;
-const TORRENTIO_BASE = 'https://torrentio.strem.fun'; // Make sure Torrentio API is correct
+const TORRENTIO_BASE = 'https://torrentio.strem.fun'; // Replace with actual API if needed
 
 app.use(cors());
 
@@ -15,7 +15,7 @@ const manifest = {
   name: "Smart Torrentio Picker",
   description: "Auto-picks the best torrent (720p > 1080p) for Stremio.",
   logo: "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
-  resources: ["stream"],
+  resources: ["stream"],  // Ensure "stream" is listed as a resource
   types: ["movie", "series"],
   idPrefixes: ["tt"]
 };
@@ -24,7 +24,7 @@ app.get('/manifest.json', (req, res) => {
   res.json(manifest);
 });
 
-// Fetching streams from Torrentio
+// Stream API - Fetching torrents from Torrentio
 app.get('/stream/:type/:id', async (req, res) => {
   const { type, id } = req.params;
 
