@@ -1,17 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
-
 const app = express();
 const PORT = process.env.PORT || 7000;
 
 app.use(cors());
 
 const manifest = {
-  "id": "org.alexsdev.smarttorrentproxy",
+  "id": "org.alexsdev.smarttorrentpicker",
   "version": "1.0.0",
-  "name": "Smart Torrent Proxy",
-  "description": "Filters and plays only the best torrent from Torrentio (720p preferred).",
+  "name": "Smart Torrent Picker",
+  "description": "Fetches and selects the best 720p torrent from public indexers.",
   "logo": "https://upload.wikimedia.org/wikipedia/commons/6/65/Black_Icon.png",
   "resources": ["stream"],
   "types": ["movie", "series"],
@@ -29,36 +28,39 @@ app.get('/manifest.json', (req, res) => {
 app.get('/stream/:type/:id', async (req, res) => {
   const { type, id } = req.params;
 
+  // Mockup example with public YTS torrent search
+  const ytsApiUrl = `https://yts.mx/api/v2/list_movies.json?query_term=${id}`;
+
   try {
-    // Change this to your actual Torrentio public manifest or hosted address
-    const torrentioURL = `https://torrentio.strem.fun/stream/${type}/${id}.json`;
+    const response = await fetch(ytsApiUrl);
+    const result = await response.json();
+    const movies = result.data.movies || [];
+    const torrents = movies.flatMap(movie => movie.torrents || []);
 
-    const response = await fetch(torrentioURL);
-    const data = await response.json();
+    const preferred = torrents
+      .filter(t => t.quality === "720p" || t.quality === "1080p")
+      .sort((a, b) => b.seeds - a.seeds)[0];
 
-    if (!Array.isArray(data)) return res.json({ streams: [] });
-
-    // Sort by 720p preferred, then seeders (if available)
-    const sorted = data.sort((a, b) => {
-      const getQualityScore = q => q.includes('720') ? 2 : q.includes('1080') ? 1 : 0;
-      const qa = getQualityScore(a.title || '');
-      const qb = getQualityScore(b.title || '');
-      return qb - qa;
-    });
-
-    const best = sorted[0];
-
-    if (best) {
-      res.json({ streams: [best] });
+    if (preferred) {
+      res.json({
+        streams: [{
+          name: "SmartTorrent",
+          title: `${preferred.quality} - ${preferred.seeds} seeds`,
+          infoHash: preferred.hash,
+          behaviorHints: {
+            bingeGroup: id
+          }
+        }]
+      });
     } else {
       res.json({ streams: [] });
     }
   } catch (err) {
-    console.error('Error fetching from Torrentio:', err);
+    console.error("Error fetching torrent:", err);
     res.json({ streams: [] });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Smart Torrent Proxy running on port ${PORT}`);
+  console.log(`Smart Torrent Picker running on port ${PORT}`);
 });
