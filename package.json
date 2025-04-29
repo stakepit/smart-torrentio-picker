@@ -1,17 +1,20 @@
 {
   "name": "smart-torrentio-picker",
   "version": "1.0.0",
-  "description": "A Stremio Addon to fetch torrents with the best seeders and 720p+ resolution",
+  "description": "Stremio add-on that autoplays the best torrent (720p > 1080p).",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-"dependencies": {
-  "express": "^4.18.2",
-  "cors": "^2.8.5",
-  "node-fetch": "^2.6.7"
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
   },
-  "author": "",
-  "license": "ISC"
+  "engines": {
+    "node": ">=14"
+  },
+  "keywords": ["stremio", "addon", "torrent", "stream", "autoplay"],
+  "author": "AlexSdev",
+  "license": "MIT"
 }
-
