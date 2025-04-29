@@ -13,7 +13,7 @@ const manifest = {
   id: "org.alexsdev.smartpicker",
   version: "1.0.0",
   name: "Smart Torrentio Picker",
-  description: "Picks the best torrent (720p > 1080p) and integrates it as a source for Stremio.",
+  description: "Auto-picks the best torrent (720p > 1080p) for Stremio.",
   logo: "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
   resources: ["stream"],
   types: ["movie", "series"],
@@ -24,12 +24,12 @@ app.get('/manifest.json', (req, res) => {
   res.json(manifest);
 });
 
-// Endpoint to fetch streams from Torrentio for movies or series
+// Fetching streams from Torrentio
 app.get('/stream/:type/:id', async (req, res) => {
   const { type, id } = req.params;
 
   try {
-    // Fetch the stream data from Torrentio
+    // Fetch stream data from Torrentio
     const response = await fetch(`${TORRENTIO_BASE}/stream/${type}/${id}.json`);
     const streams = await response.json();
 
@@ -37,19 +37,20 @@ app.get('/stream/:type/:id', async (req, res) => {
       return res.json({ streams: [] });
     }
 
-    // Filter the streams to prioritize 720p > 1080p
+    // Filter streams by 720p or 1080p
     const preferredOrder = ["720p", "1080p"];
     let bestStream = null;
 
     for (const resolution of preferredOrder) {
       const filtered = streams.filter(s => s.quality === resolution && s.url);
       if (filtered.length > 0) {
+        // Sort by the number of seeders and select the best one
         bestStream = filtered.sort((a, b) => (b.seeders || 0) - (a.seeders || 0))[0];
         break;
       }
     }
 
-    // Fallback to first available stream if no 720p or 1080p streams found
+    // If no 720p or 1080p found, select the first available stream
     if (!bestStream) {
       bestStream = streams.find(s => s.url);
     }
@@ -58,16 +59,16 @@ app.get('/stream/:type/:id', async (req, res) => {
       return res.json({ streams: [] });
     }
 
-    // Return the best stream with a play hint (immediate play)
+    // Return the best stream with autoplay flag
     res.json({
       streams: [
         {
           url: bestStream.url,
-          name: "Best Pick",
-          title: bestStream.title || "Best Pick",
+          name: "Best Torrent",
+          title: bestStream.title || "Best Torrent",
           behaviorHints: {
             notWebReady: false,
-            immediatePlay: true,  // Auto play the best stream
+            immediatePlay: true,  // Auto-play the stream
             bingeGroup: id,
           },
         }
