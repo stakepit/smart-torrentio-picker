@@ -36,10 +36,11 @@ app.get('/stream/:type/:id', (req, res) => {
   res.json({ streams });
 });
 
-module.exports = app; // <--- THIS IS CRUCIAL FOR VERCEL
+// Set up the port to be used by Render (or fallback to 7000 for local testing)
+const PORT = process.env.PORT || 7000;
 
-const PORT = process.env.PORT || 7000;  // Use the PORT environment variable for Render
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+module.exports = app;
