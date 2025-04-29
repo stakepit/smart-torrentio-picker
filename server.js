@@ -56,26 +56,40 @@ app.get('/stream/:type/:id', async (req, res) => {
       return res.json({ streams: [] });
     }
 
-    // Return a button with the best torrent selected
-    res.json({
-      streams: [
-        {
-          url: bestStream.url,
-          name: "Play Best Pick",
-          title: bestStream.title || "Best Pick",
-          behaviorHints: {
-            notWebReady: false,
-            immediatePlay: false, // Don't autoplay
-            bingeGroup: id,
-          },
-          // Custom button logic
-          customButton: {
-            label: "Play Best Pick",  // Label for the button
-            action: bestStream.url,   // When clicked, play the best stream
+    // Prepare response with the button next to "Play Trailer" for movies, or under each episode for series
+    let customButton = {
+      label: "Play Best Pick",  // Label for the button
+      action: bestStream.url,   // When clicked, play the best stream
+    };
+
+    if (type === 'movie') {
+      // For Movies: Display button next to the "Play Trailer" button
+      res.json({
+        streams: [
+          {
+            url: bestStream.url,
+            name: "Play Best Pick",
+            title: bestStream.title || "Best Pick",
+            behaviorHints: {
+              notWebReady: false,
+              immediatePlay: false, // Don't autoplay
+            },
+            customButton: customButton,  // Add button for movies
           }
-        }
-      ]
-    });
+        ]
+      });
+    } else if (type === 'series') {
+      // For TV Series: Display the button under each episode
+      const episodes = streams.map(stream => ({
+        url: stream.url,
+        name: `Episode ${stream.episode}`,
+        customButton: customButton,  // Add button under each episode
+      }));
+
+      res.json({
+        streams: episodes,
+      });
+    }
 
   } catch (error) {
     console.error("Error fetching streams:", error);
