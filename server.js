@@ -2,8 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-// Use CORS to allow requests from any origin
-app.use(cors());
+app.use(cors()); // Enable CORS to allow requests from Stremio
 
 // Serve the manifest.json for Stremio
 app.get('/manifest.json', (req, res) => {
@@ -25,9 +24,9 @@ app.get('/manifest.json', (req, res) => {
   });
 });
 
-// Example endpoint to fetch torrent data
+// Example endpoint to fetch torrent data (filtering by resolution and seeders)
 app.get('/getTorrents', (req, res) => {
-  // This is where you would integrate with a torrent source
+  // This is where you would integrate with a torrent source (such as Torrentio API)
   const torrents = [
     {
       title: "Example Movie 720p",
@@ -48,6 +47,34 @@ app.get('/getTorrents', (req, res) => {
                                  .sort((a, b) => b.seeders - a.seeders);
 
   res.json(sortedTorrents);
+});
+
+// Stream endpoint that Stremio will use to play the selected torrent
+app.get('/stream/:torrentId', (req, res) => {
+  const torrentId = req.params.torrentId;
+
+  // You can modify this to fetch a specific torrent's stream URL from a torrent provider
+  // For example, retrieve the magnet link or file URL for the torrent
+  const streamUrls = {
+    "torrent1": "http://example.com/torrent1/stream.m3u8",  // Example stream URL for torrent1
+    "torrent2": "http://example.com/torrent2/stream.m3u8"   // Example stream URL for torrent2
+  };
+
+  const streamUrl = streamUrls[torrentId];
+  
+  if (streamUrl) {
+    res.json({ 
+      streams: [
+        {
+          "url": streamUrl, // Provide the actual stream URL
+          "type": "hls",    // For HLS streams (e.g., .m3u8)
+          "quality": "720p", // Adjust quality based on torrent info
+        }
+      ]
+    });
+  } else {
+    res.status(404).json({ error: "Stream not found" });
+  }
 });
 
 const PORT = process.env.PORT || 7000;
