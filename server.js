@@ -1,77 +1,91 @@
 const express = require('express');
+const fetch = require('node-fetch');
 const cors = require('cors');
-const TorrentSearchApi = require('torrent-search-api');
-
 const app = express();
+
+// Enable CORS to allow Stremio to fetch the addon
 app.use(cors());
 
-// TorrentSearch setup
-TorrentSearchApi.enablePublicProviders();
-TorrentSearchApi.enableProvider('ThePirateBay');
-TorrentSearchApi.enableProvider('Yts');
-TorrentSearchApi.enableProvider('Eztv');
+// Helper function to filter torrents based on size, seeders, and resolution
+const filterBestTorrent = (torrents) => {
+  let bestMatch = torrents.filter(t => 
+    (t.size <= 800000000 && t.quality === '720p' && t.seeders >= 30)
+  );
 
-// Manifest definition
-const manifest = {
-  "id": "org.alexsdev.smartautoplay",
-  "version": "3.0.0",
-  "name": "SmarT-Autoplay",
-  "description": "Finds best source for movies and TV shows.",
-  "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
-  "resources": ["stream"],
-  "types": ["movie", "series"],
-  "idPrefixes": ["tt"],
-  "behaviorHints": {
-    "configurable": false,
-    "adult": false
+  // If no 720p match, look for 1080p with more than 50 seeders and less than 1500MB
+  if (bestMatch.length === 0) {
+    bestMatch = torrents.filter(t => 
+      (t.size <= 1500000000 && t.quality === '1080p' && t.seeders >= 50)
+    );
   }
+
+  return bestMatch[0]; // Return the best torrent or undefined if none match
 };
 
-// Manifest endpoint
-app.get('/manifest.json', (req, res) => {
-  res.send(manifest);
-});
+// Function to fetch torrents from public sources: RARBG, YTS, EZTV, ThePirateBay
+const fetchTorrentsFromSources = async (type, id) => {
+  const sources = [
+    // RARBG API: Search for movies or shows (replace with correct API URL)
+    `https://torrentapi.org/pubapi_v2.php?mode=search&search_string=${id}&format=json&category=movies&limit=100&ranked=1`,  // Example RARBG source
+    `https://yts.mx/api/v2/list_movies.json?query_term=${id}`,  // Example YTS API (movies only)
+    `https://eztv.re/api/get-torrents?query=${id}`,  // Example EZTV API (TV shows only)
+    `https://thepiratebay.org/search/${id}/0/99/0`  // Example ThePirateBay search URL (basic GET)
+  ];
 
-// Stream endpoint
-app.get('/stream/:type/:id.json', async (req, res) => {
+  let torrents = [];
+
+  // Fetch from each source
+  for (const url of sources) {
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      // Check if the source returns torrents and add them to the torrents list
+      if (data.torrents) {
+        torrents = torrents.concat(data.torrents);
+      } else if (data.movies) {
+        torrents = torrents.concat(data.movies);
+      }
+    } catch (err) {
+      console.error(`Error fetching from source: ${url}`, err);
+    }
+  }
+
+  return torrents;
+};
+
+// Endpoint to handle search
+app.get('/search/:type/:id', async (req, res) => {
   const { type, id } = req.params;
 
   try {
-    const query = id.startsWith('tt') ? id : 'Popular Movie'; // fallback query
-    const torrents = await TorrentSearchApi.search(query, type === 'series' ? 'TV' : 'Movies', 40);
+    // Fetch torrents from the public sources
+    const torrents = await fetchTorrentsFromSources(type, id);
 
-    // Prioritize EZTV > YTS > others, filter 720p/1080p with rules
-    const prioritized = torrents.sort((a, b) => {
-      const order = ['eztv', 'yts', 'rarbg', 'thepiratebay'];
-      return order.indexOf((a.provider || '').toLowerCase()) - order.indexOf((b.provider || '').toLowerCase());
-    });
+    // Filter torrents to return only the best option
+    const bestTorrent = filterBestTorrent(torrents);
 
-    const best = prioritized.find(t =>
-      t.title.toLowerCase().includes('720p') &&
-      (!t.size || t.size.includes('MB') && parseFloat(t.size) <= 800) &&
-      (t.seeds || 0) > 30
-    ) || prioritized.find(t =>
-      t.title.toLowerCase().includes('1080p') &&
-      (!t.size || t.size.includes('MB') && parseFloat(t.size) <= 1500) &&
-      (t.seeds || 0) > 50
-    );
+    if (bestTorrent) {
+      res.json({
+        streams: [{
+          title: bestTorrent.title,
+          url: bestTorrent.url,  // Assuming the `url` field is the torrent or magnet link
+          quality: bestTorrent.quality,
+          size: bestTorrent.size
+        }]
+      });
+    } else {
+      res.status(404).json({ error: 'No suitable torrents found' });
+    }
 
-    const stream = best ? [{
-      name: best.title,
-      title: best.title,
-      infoHash: best.infoHash || '',
-      url: best.magnet,
-      behaviorHints: { notWebReady: false }
-    }] : [];
-
-    res.send(stream);
-  } catch (err) {
-    console.error("Error fetching torrents:", err);
-    res.send([]);
+  } catch (error) {
+    console.error('Error fetching torrents:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-const port = process.env.PORT || 7000;
+// Starting the server
+const port = 3000;
 app.listen(port, () => {
-  console.log(`SmarT-Autoplay addon running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
