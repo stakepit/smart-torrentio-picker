@@ -1,8 +1,8 @@
-const manifest = {
+{
   "id": "org.alexsdev.smartautoplay",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "name": "SmarT-Autoplay",
-  "description": "Autoplay for movies and TV shows.",
+  "description": "Finds best source for movies and TV shows.",
   "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
   "resources": ["stream"],
   "types": ["movie", "series"],
@@ -11,4 +11,4 @@ const manifest = {
     "configurable": false,
     "adult": false
   }
-};
+}
