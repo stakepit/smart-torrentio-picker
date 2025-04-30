@@ -1,5 +1,5 @@
 {
-  "name": "smart-torrentio-picker",
+  "name": "smartautoplay",
   "version": "1.0.0",
   "description": "Stremio add-on that autoplays the best torrent (720p > 1080p).",
   "main": "server.js",
