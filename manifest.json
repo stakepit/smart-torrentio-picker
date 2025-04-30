@@ -1,14 +1,16 @@
 {
-  "id": "org.alexsdev.smartautoplay",
-  "version": "3.0.0",
+  "id": "org.stremio.smart-autoplay",
+  "version": "1.0.0",
   "name": "SmarT-Autoplay",
-  "description": "Finds best source for movies and TV shows.",
-  "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
-  "resources": ["stream"],
-  "types": ["movie", "series"],
-  "idPrefixes": ["tt"],
-  "behaviorHints": {
-    "configurable": false,
-    "adult": false
-  }
+  "description": "Finds best source for movies and TV shows",
+  "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png", 
+  "background": "https://example.com/background.jpg", 
+  "contentTypes": ["movie", "series"],
+  "types": ["source"],
+  "sources": [
+    {
+      "name": "SmarT-Autoplay",
+      "url": "https://smart-torrentio-picker.onrender.com/search"
+    }
+  ]
 }
