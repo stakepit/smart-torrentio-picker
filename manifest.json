@@ -4,9 +4,9 @@
   "name": "SmarT-Autoplay",
   "description": "Finds best source for movies and TV shows.",
   "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
-  "resources": ["stream"],   // Make sure "stream" is here
-  "types": ["movie", "series"],  // Should have both movie and series
-  "idPrefixes": ["tt"],     // This is standard, for IMDB ID
+  "resources": ["stream"],
+  "types": ["movie", "series"],
+  "idPrefixes": ["tt"],
   "behaviorHints": {
     "configurable": false,
     "adult": false
