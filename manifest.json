@@ -2,7 +2,7 @@ const manifest = {
   "id": "org.alexsdev.smartautoplay",
   "version": "2.0.0",
   "name": "SmarT-Autoplay",
-  "description": "Autoplay for movies and TV shows.",
+  "description": "Fetches best torrents from EZTV/YTS/TPB with autoplay for movies and TV shows.",
   "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
   "resources": ["stream"],
   "types": ["movie", "series"],
