@@ -1,17 +1,23 @@
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch');
-const app = express();
-const PORT = process.env.PORT || 7000;
+const TorrentSearchApi = require('torrent-search-api');
 
+const app = express();
 app.use(cors());
 
+// TorrentSearch setup
+TorrentSearchApi.enablePublicProviders();
+TorrentSearchApi.enableProvider('ThePirateBay');
+TorrentSearchApi.enableProvider('Yts');
+TorrentSearchApi.enableProvider('Eztv');
+
+// Manifest definition
 const manifest = {
-  "id": "org.alexsdev.smarttorrentplus",
-  "version": "2.0.0",
-  "name": "Smart Torrent Picker+",
-  "description": "Fetches best torrents from EZTV/YTS. Prioritizes 720p, supports autoplay and binge.",
-  "logo": "https://upload.wikimedia.org/wikipedia/commons/6/65/Black_Icon.png",
+  "id": "org.alexsdev.smartautoplay",
+  "version": "3.0.0",
+  "name": "SmarT-Autoplay",
+  "description": "Finds best source for movies and TV shows.",
+  "logo": "https://raw.githubusercontent.com/stakepit/smart-torrentio-picker/main/logo.png",
   "resources": ["stream"],
   "types": ["movie", "series"],
   "idPrefixes": ["tt"],
@@ -21,69 +27,51 @@ const manifest = {
   }
 };
 
+// Manifest endpoint
 app.get('/manifest.json', (req, res) => {
-  res.json(manifest);
+  res.send(manifest);
 });
 
-app.get('/stream/:type/:id', async (req, res) => {
+// Stream endpoint
+app.get('/stream/:type/:id.json', async (req, res) => {
   const { type, id } = req.params;
-  let results = [];
-
-  const addTorrents = (torrents, source) => {
-    torrents.forEach(t => {
-      const sizeMB = parseFloat(t.size.replace(/[^\d.]/g, ''));
-      const is720p = t.title.includes("720p");
-      const is1080p = t.title.includes("1080p");
-      const seederCount = parseInt(t.seeders || 0);
-
-      if (is720p && seederCount > 30 && sizeMB < 800) {
-        results.push({ ...t, quality: "720p", source, score: seederCount + 20 });
-      } else if (is1080p && seederCount > 50 && sizeMB < 1500) {
-        results.push({ ...t, quality: "1080p", source, score: seederCount });
-      }
-    });
-  };
 
   try {
-    // EZTV
-    const eztvRes = await fetch(`https://eztv.re/api/get-torrents?imdb_id=${id}`);
-    const eztvData = await eztvRes.json();
-    if (eztvData.torrents) addTorrents(eztvData.torrents, "EZTV");
+    const query = id.startsWith('tt') ? id : 'Popular Movie'; // fallback query
+    const torrents = await TorrentSearchApi.search(query, type === 'series' ? 'TV' : 'Movies', 40);
 
-    // YTS (movies only)
-    if (type === "movie") {
-      const ytsRes = await fetch(`https://yts.mx/api/v2/list_movies.json?query_term=${id}`);
-      const ytsData = await ytsRes.json();
-      const ytsTorrents = (ytsData.data.movies || []).flatMap(m => m.torrents.map(t => ({
-        title: `${m.title} ${t.quality}`,
-        size: t.size,
-        seeders: t.seeds,
-        infoHash: t.hash
-      })));
-      addTorrents(ytsTorrents, "YTS");
-    }
+    // Prioritize EZTV > YTS > others, filter 720p/1080p with rules
+    const prioritized = torrents.sort((a, b) => {
+      const order = ['eztv', 'yts', 'rarbg', 'thepiratebay'];
+      return order.indexOf((a.provider || '').toLowerCase()) - order.indexOf((b.provider || '').toLowerCase());
+    });
 
-    if (results.length === 0) return res.json({ streams: [] });
+    const best = prioritized.find(t =>
+      t.title.toLowerCase().includes('720p') &&
+      (!t.size || t.size.includes('MB') && parseFloat(t.size) <= 800) &&
+      (t.seeds || 0) > 30
+    ) || prioritized.find(t =>
+      t.title.toLowerCase().includes('1080p') &&
+      (!t.size || t.size.includes('MB') && parseFloat(t.size) <= 1500) &&
+      (t.seeds || 0) > 50
+    );
 
-    const best = results.sort((a, b) => b.score - a.score)[0];
-    const stream = {
-      name: "SmartTorrent+",
-      title: `${best.quality} ${best.source} - ${best.seeders} seeds`,
-      infoHash: best.infoHash,
-      fileIdx: 0,
-      behaviorHints: {
-        bingeGroup: id,
-        notWebReady: false
-      }
-    };
+    const stream = best ? [{
+      name: best.title,
+      title: best.title,
+      infoHash: best.infoHash || '',
+      url: best.magnet,
+      behaviorHints: { notWebReady: false }
+    }] : [];
 
-    res.json({ streams: [stream] });
+    res.send(stream);
   } catch (err) {
-    console.error("Stream error:", err);
-    res.json({ streams: [] });
+    console.error("Error fetching torrents:", err);
+    res.send([]);
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Smart Torrent Picker+ running on port ${PORT}`);
+const port = process.env.PORT || 7000;
+app.listen(port, () => {
+  console.log(`SmarT-Autoplay addon running on port ${port}`);
 });
